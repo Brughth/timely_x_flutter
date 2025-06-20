@@ -32,13 +32,14 @@ class _TyxCalendarWeekViewLargeState extends State<TyxCalendarWeekViewLarge> {
   late DateTime _selectedDate;
   late List<DateTime> _weekDays;
   final ScrollController _scrollController = ScrollController();
-  final double _hourHeight = 60.0;
+  late double _hourHeight;
   int _startHour = 6; // 6 AM
   int _endHour = 22; // 10 PM
 
   @override
   void initState() {
     super.initState();
+    _hourHeight = widget.option.weekViewHourHeight;
     _startHour = widget.option.timeslotStartTime?.hour ?? 0;
     _endHour = widget.option.timeslotEndTime?.hour ?? 24;
     _selectedDate = widget.initialDate ?? DateTime.now();

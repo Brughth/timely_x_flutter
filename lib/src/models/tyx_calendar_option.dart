@@ -15,6 +15,7 @@ class TyxCalendarOption {
   final double? cellWidth;
   final double? timesCellWidth;
   final double? resourceHeaderHeight;
+  final double weekViewHourHeight;
 
   final List<TyxResource>? resources;
   final List<TyxEvent>? events;
@@ -43,5 +44,6 @@ class TyxCalendarOption {
     this.showTrailingDays = false,
     this.startWeekDay = 7,
     this.initialView = TyxView.month,
+    this.weekViewHourHeight = 60.0,
   });
 }
