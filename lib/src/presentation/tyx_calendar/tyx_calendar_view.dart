@@ -108,6 +108,7 @@ class _TyxCalendarViewState extends State<TyxCalendarView> {
                   onViewChanged: _onViewChanged,
                   view: _view,
                   onDateSelected: _onDateChanged,
+                  onBorderChanged: widget.onBorderChanged,
 
                   // onEventTapped: widget.onEventTapped,
                 ),

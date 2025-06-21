@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:timely_x/src/models/tyx_calendar_border.dart';
 import 'package:timely_x/src/models/tyx_view.dart';
 import 'package:timely_x/src/presentation/tyx_calendar/tyx_calendar_day/tyx_calendar_day_view_large.dart';
 import 'package:timely_x/src/presentation/tyx_calendar/tyx_calendar_day/tyx_calendar_day_view_small.dart';
@@ -13,6 +14,7 @@ class TyxCalendarDayView extends StatefulWidget {
     this.onEventTapped,
     this.onDateChanged,
     this.onViewChanged,
+    this.onBorderChanged,
     required this.view,
   });
   final TyxCalendarOption option;
@@ -21,6 +23,7 @@ class TyxCalendarDayView extends StatefulWidget {
   final Function(TyxEvent)? onEventTapped;
   final Function(DateTime date)? onDateChanged;
   final Function(TyxView view)? onViewChanged;
+  final Function(TyxCalendarBorder border)? onBorderChanged;
   final TyxView view;
 
   @override
@@ -40,6 +43,7 @@ class _TyxCalendarDayViewState extends State<TyxCalendarDayView> {
                 onEventTapped: widget.onEventTapped,
                 onDateChanged: widget.onDateChanged,
                 onViewChanged: widget.onViewChanged,
+                onBorderChanged: widget.onBorderChanged,
                 view: widget.view,
               )
             : TyxCalendarDayViewSmall(
