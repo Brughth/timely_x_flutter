@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:timely_x/src/models/tyx_calendar_border.dart';
 import 'package:timely_x/src/models/tyx_calendar_option.dart';
 import 'package:timely_x/src/models/tyx_event.dart';
 import 'package:timely_x/src/models/tyx_event_enhanced.dart';
@@ -12,6 +13,7 @@ class TyxCalendarDayViewLarge extends StatefulWidget {
   final Function(TyxEvent)? onEventTapped;
   final Function(DateTime date)? onDateChanged;
   final Function(TyxView view)? onViewChanged;
+  final Function(TyxCalendarBorder border)? onBorderChanged;
   final TyxView view;
   final DateTime? initialDate;
 
@@ -24,6 +26,7 @@ class TyxCalendarDayViewLarge extends StatefulWidget {
     this.onViewChanged,
     required this.view,
     this.initialDate,
+    this.onBorderChanged,
   });
 
   @override
@@ -197,6 +200,18 @@ class _TyxCalendarDayViewLargeState extends State<TyxCalendarDayViewLarge> {
                           _selectedDate.day,
                         );
                         widget.onDateChanged?.call(_selectedDate);
+
+                        widget.onBorderChanged?.call(TyxCalendarBorder(
+                          start: DateTime(_selectedDate.year,
+                              _selectedDate.month, 1), // First day of the month
+                          end: DateTime(
+                              _selectedDate.year,
+                              _selectedDate.month + 1,
+                              0,
+                              23,
+                              59,
+                              59), // Last day of the month
+                        ));
                       });
                     },
                   ),
@@ -206,14 +221,31 @@ class _TyxCalendarDayViewLargeState extends State<TyxCalendarDayViewLarge> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: () {
-                      setState(() {
-                        _selectedDate = DateTime(
-                          _selectedDate.year,
-                          _selectedDate.month + 1,
-                          _selectedDate.day,
-                        );
-                        widget.onDateChanged?.call(_selectedDate);
-                      });
+                      setState(
+                        () {
+                          _selectedDate = DateTime(
+                            _selectedDate.year,
+                            _selectedDate.month + 1,
+                            _selectedDate.day,
+                          );
+                          widget.onDateChanged?.call(_selectedDate);
+                          widget.onBorderChanged?.call(
+                            TyxCalendarBorder(
+                              start: DateTime(
+                                  _selectedDate.year,
+                                  _selectedDate.month,
+                                  1), // First day of the month
+                              end: DateTime(
+                                  _selectedDate.year,
+                                  _selectedDate.month + 1,
+                                  0,
+                                  23,
+                                  59,
+                                  59), // Last day of the month
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
                 ],
