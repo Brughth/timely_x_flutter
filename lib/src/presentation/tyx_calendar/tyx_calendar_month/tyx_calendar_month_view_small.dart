@@ -84,37 +84,39 @@ class _TyxCalendarMonthViewSmallState extends State<TyxCalendarMonthViewSmall> {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Today button
-              // OutlinedButton(
-              //   onPressed: () {
-              //     final now = DateTime.now();
-              //     setState(() {
-              //       _selectedDate = now;
-              //     });
-              //     widget.onDateChanged?.call(now);
-              //   },
-              //   child: const Text('Today'),
-              // ),
-              // const SizedBox(width: 16),
-              // View type selector
-              Expanded(
-                child: SegmentedButton<TyxView>(
-                  segments: TyxView.values
-                      .map((view) =>
-                          ButtonSegment(value: view, label: Text(view.name)))
-                      .toList(),
-                  selected: {widget.view},
-                  onSelectionChanged: (Set<TyxView> newSelection) {
-                    widget.onViewChanged?.call(newSelection.first);
-                  },
+          if (widget.option.showTyxCalendarViewOptionsOnSmallScreen) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Today button
+                // OutlinedButton(
+                //   onPressed: () {
+                //     final now = DateTime.now();
+                //     setState(() {
+                //       _selectedDate = now;
+                //     });
+                //     widget.onDateChanged?.call(now);
+                //   },
+                //   child: const Text('Today'),
+                // ),
+                // const SizedBox(width: 16),
+                // View type selector
+                Expanded(
+                  child: SegmentedButton<TyxView>(
+                    segments: TyxView.values
+                        .map((view) =>
+                            ButtonSegment(value: view, label: Text(view.name)))
+                        .toList(),
+                    selected: {widget.view},
+                    onSelectionChanged: (Set<TyxView> newSelection) {
+                      widget.onViewChanged?.call(newSelection.first);
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
