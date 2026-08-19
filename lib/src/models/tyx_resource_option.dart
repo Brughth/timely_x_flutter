@@ -10,6 +10,11 @@ class TyxResourceOption {
   final Duration? timelotSlotDuration;
   final DateTime? initialDate;
   final TimeOfDay? timeslotStartTime;
+
+  /// Fin de la plage horaire affichée. Sans valeur, la grille court jusqu'à
+  /// la fin de la journée — ce qui impose de faire défiler les heures creuses
+  /// pour atteindre les rendez-vous.
+  final TimeOfDay? timeslotEndTime;
   final double? cellWidth;
   final double? timesCellWidth;
   final double? resourceHeaderHeight;
@@ -25,6 +30,7 @@ class TyxResourceOption {
     this.timelotSlotDuration,
     this.initialDate,
     this.timeslotStartTime,
+    this.timeslotEndTime,
     this.cellWidth,
     this.timesCellWidth,
     this.resourceHeaderHeight,

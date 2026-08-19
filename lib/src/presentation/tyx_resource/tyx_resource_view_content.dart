@@ -38,7 +38,19 @@ class _TyxResourceViewContentState extends State<TyxResourceViewContent> {
       ),
     );
 
-    var endOfDate = initialDate.endOf(Unit.day);
+    // Bornée par `timeslotEndTime` quand elle est fournie : on n'affiche que
+    // les heures d'ouverture au lieu des vingt-quatre heures.
+    final endTime = widget.option?.timeslotEndTime;
+    var endOfDate = endTime == null
+        ? initialDate.endOf(Unit.day)
+        : Jiffy.parseFromDateTime(
+            DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute),
+          );
+
+    // Une fin antérieure au début n'a pas de sens : on retombe sur la journée.
+    if (endOfDate.isBefore(initialDate)) {
+      endOfDate = initialDate.endOf(Unit.day);
+    }
     var totalDayDurationInMinutes = endOfDate.diff(
       initialDate,
       unit: Unit.minute,
