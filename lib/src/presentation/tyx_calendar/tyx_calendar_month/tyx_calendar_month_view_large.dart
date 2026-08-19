@@ -243,43 +243,141 @@ class _TyxCalendarMonthViewLargeState extends State<TyxCalendarMonthViewLarge> {
         ),
         child: Column(
           children: [
-            // Day number
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: isToday
-                    ? const BorderRadius.vertical(top: Radius.circular(0))
-                    : null,
-              ),
-              child: Text(
-                day.day.toString(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                  color: !isCurrentMonth ? theme.disabledColor : null,
-                ),
+            // Day number, and the day's event count when there is more
+            // than one: the cell is too short to show them all at once.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    day.day.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                      color: !isCurrentMonth ? theme.disabledColor : null,
+                    ),
+                  ),
+                  if (dayEvents.length > 1)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: _buildDayCountBadge(day, dayEvents),
+                    ),
+                ],
               ),
             ),
 
-            // Events for the day
+            // Events for the day.
+            //
+            // La liste défile et contient *tous* les événements : aucun n'est
+            // hors d'atteinte. Le nombre exact est rappelé à côté du numéro du
+            // jour, car une cellule de mois ne montre que les premiers.
             Expanded(
               child: dayEvents.isEmpty
                   ? const SizedBox() // Empty placeholder
                   : ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: const ClampingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
                           vertical: 2, horizontal: 4),
                       itemCount: dayEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = dayEvents[index];
-                        return _buildEventIndicator(event);
-                      },
+                      itemBuilder: (context, index) =>
+                          _buildEventIndicator(dayEvents[index]),
                     ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Pastille rappelant le nombre de rendez-vous du jour.
+  ///
+  /// Une cellule de mois est trop basse pour tous les afficher : sans ce
+  /// repère, une journée à six rendez-vous en montrait trois sans le moindre
+  /// indice. La toucher ouvre la liste complète.
+  Widget _buildDayCountBadge(DateTime day, List<TyxEvent> dayEvents) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      // Clé stable : le libellé de la pastille peut coïncider avec le numéro
+      // d'un autre jour, ce qui rend une recherche par texte ambiguë.
+      key: ValueKey('tyx-day-count-${day.year}-${day.month}-${day.day}'),
+      onTap: () => _showDayEventsSheet(day, dayEvents),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          '${dayEvents.length}',
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Liste complète des événements d'une journée.
+  ///
+  /// Toucher un événement referme la liste et remonte l'événement à l'hôte,
+  /// exactement comme un clic direct dans la grille.
+  void _showDayEventsSheet(DateTime day, List<TyxEvent> dayEvents) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+
+        return AlertDialog(
+          title: Text(
+            DateFormat.yMMMMd(
+              Localizations.localeOf(dialogContext).toString(),
+            ).format(day),
+            style: theme.textTheme.titleMedium,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          content: SizedBox(
+            width: 360,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: dayEvents.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final event = dayEvents[index];
+
+                return ListTile(
+                  dense: true,
+                  leading: Container(
+                    width: 4,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: event.color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  title: Text(event.title ?? ''),
+                  subtitle: Text(
+                    '${TimeOfDay.fromDateTime(event.start).format(context)}'
+                    ' - ${TimeOfDay.fromDateTime(event.end).format(context)}',
+                  ),
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    widget.onEventTapped?.call(event);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 
