@@ -201,17 +201,33 @@ class _TyxCalendarMonthViewLargeState extends State<TyxCalendarMonthViewLarge> {
   Widget _buildCalendarGrid() {
     final daysInMonth = _getDaysInMonth();
 
-    return GridView.builder(
-      // physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        childAspectRatio: 16 / 10,
-      ),
-      itemCount: daysInMonth.length,
-      itemBuilder: (context, index) {
-        final day = daysInMonth[index];
-        return _buildDayCell(day);
-      },
+    // Une grille en `childAspectRatio` déduit la hauteur des cellules de leur
+    // largeur : la hauteur réellement disponible n'entrait pas dans le calcul.
+    // Les cellules restaient basses — trop pour afficher les rendez-vous d'une
+    // journée chargée — et un vide subsistait sous la grille.
+    //
+    // Les semaines se partagent désormais toute la hauteur offerte.
+    final weeks = <List<DateTime>>[];
+    for (var i = 0; i < daysInMonth.length; i += 7) {
+      final end = i + 7 <= daysInMonth.length ? i + 7 : daysInMonth.length;
+      weeks.add(daysInMonth.sublist(i, end));
+    }
+
+    return Column(
+      children: [
+        for (final week in weeks)
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final day in week) Expanded(child: _buildDayCell(day)),
+                // Une dernière semaine incomplète ne doit pas étirer ses jours.
+                for (var i = week.length; i < 7; i++)
+                  const Expanded(child: SizedBox.shrink()),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -304,16 +320,18 @@ class _TyxCalendarMonthViewLargeState extends State<TyxCalendarMonthViewLarge> {
       key: ValueKey('tyx-day-count-${day.year}-${day.month}-${day.day}'),
       onTap: () => _showDayEventsSheet(day, dayEvents),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
+          color: theme.colorScheme.primary,
+          shape: BoxShape.circle,
         ),
         child: Text(
           '${dayEvents.length}',
-          style: theme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onPrimary,
           ),
         ),
       ),
