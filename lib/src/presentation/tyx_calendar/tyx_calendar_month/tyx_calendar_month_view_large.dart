@@ -262,24 +262,155 @@ class _TyxCalendarMonthViewLargeState extends State<TyxCalendarMonthViewLarge> {
               ),
             ),
 
-            // Events for the day
+            // Events for the day.
+            //
+            // A month cell is short: rendering every event silently clipped the
+            // extras, so a day with six appointments looked like it had three.
+            // We now render what actually fits and surface the rest behind a
+            // "+N" chip that opens the full list for that day.
             Expanded(
               child: dayEvents.isEmpty
                   ? const SizedBox() // Empty placeholder
-                  : ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2, horizontal: 4),
-                      itemCount: dayEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = dayEvents[index];
-                        return _buildEventIndicator(event);
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemHeight = _eventIndicatorHeight(context);
+                        final available = constraints.maxHeight - 4; // padding
+                        final capacity =
+                            (available / itemHeight).floor().clamp(0, 99);
+
+                        final fitsAll = capacity >= dayEvents.length;
+                        // One slot is given up to the "+N" chip.
+                        final visibleCount = fitsAll
+                            ? dayEvents.length
+                            : (capacity - 1).clamp(0, dayEvents.length);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 2, horizontal: 4),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final event
+                                  in dayEvents.take(visibleCount))
+                                _buildEventIndicator(event),
+                              if (!fitsAll)
+                                _buildMoreIndicator(
+                                  day,
+                                  dayEvents,
+                                  dayEvents.length - visibleCount,
+                                ),
+                            ],
+                          ),
+                        );
                       },
                     ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Hauteur d'un indicateur : une ligne de texte, ses marges intérieures et
+  /// l'espacement qui le sépare du suivant. Calculée depuis le thème pour
+  /// rester juste quelle que soit la taille de police.
+  double _eventIndicatorHeight(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall;
+    final fontSize = style?.fontSize ?? 12;
+    final lineHeight = fontSize * (style?.height ?? 1.35);
+
+    return lineHeight + 4 /* padding vertical */ + 2 /* marge */;
+  }
+
+  /// Chip « +N » : indique les événements masqués et ouvre la liste du jour.
+  Widget _buildMoreIndicator(
+    DateTime day,
+    List<TyxEvent> dayEvents,
+    int hiddenCount,
+  ) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: () => _showDayEventsSheet(day, dayEvents),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          '+$hiddenCount',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  /// Liste complète des événements d'une journée.
+  ///
+  /// Toucher un événement referme la liste et remonte l'événement à l'hôte,
+  /// exactement comme un clic direct dans la grille.
+  void _showDayEventsSheet(DateTime day, List<TyxEvent> dayEvents) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+
+        return AlertDialog(
+          title: Text(
+            DateFormat.yMMMMd(
+              Localizations.localeOf(dialogContext).toString(),
+            ).format(day),
+            style: theme.textTheme.titleMedium,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          content: SizedBox(
+            width: 360,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: dayEvents.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final event = dayEvents[index];
+
+                return ListTile(
+                  dense: true,
+                  leading: Container(
+                    width: 4,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: event.color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  title: Text(event.title ?? ''),
+                  subtitle: Text(
+                    '${TimeOfDay.fromDateTime(event.start).format(context)}'
+                    ' - ${TimeOfDay.fromDateTime(event.end).format(context)}',
+                  ),
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    widget.onEventTapped?.call(event);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 
